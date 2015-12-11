@@ -127,6 +127,8 @@ def download_pics_from_twitter(links, tmp_path):
         searched = image_match.findall(resp.text)
         replaced = [link.replace(':large', ':orig') for link in searched]
 
+        if '400x400' in replaced: continue # skip profile picture
+
         image_links += replaced
 
     # download actual files
