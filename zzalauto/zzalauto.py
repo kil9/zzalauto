@@ -114,7 +114,9 @@ def download_pics_from_twitter(links, tmp_path):
     # collect direct links
     for link in links:
         resp = requests.get(link)
-        if resp.status_code != 200:
+        if resp.status_code == 404:
+            continue
+        elif resp.status_code != 200:
             msg = 'Could not read page. response code: {}, url: {}'.format(
                     resp.status_code, link)
             raise StopPipeline(msg)
