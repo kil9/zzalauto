@@ -29,23 +29,26 @@ dropbox_access_token = os.environ['DROPBOX_ACCESS_TOKEN']
 def main():
     return render_template('base.html', contents='hello world!')
 
-# TODO: get count per request
 @app.route('/activate')
 @app.route('/activate/<int:count>')
 @app.route('/activate/<tag>')
-def activate(tag='twitter', count=5):
+@app.route('/activate/<tag>/<int:count>')
+def activate(tag=None, count=5):
     log.info('activated')
 
     if tag in ('notag', 'untagged', '_untagged_'):
         tag = '_untagged_'
 
     ids, links = get_links_from_pocket(tag, count)
-    if links: image_files = download_pics_from_twitter(links)
-    upload_to_dropbox(image_files)
-    archive_pocket_links(ids)
+    if links:
+        image_files = download_pics_from_twitter(links)
+        upload_to_dropbox(image_files)
+        archive_pocket_links(ids)
+        contents = '{} pics are downloaded for {} links'.format(len(image_files), len(links))
+    else:
+        contents = 'no links to download'
 
-# TODO: 마지막엔 트윗들을 보여주는게 좋은 것 같다
-    return render_template('base.html', links=links)
+    return render_template('base.html', links=links, contents=contents)
 
 def get_links_from_pocket(tag, count):
     log.info('get links from pocket. tag: {}, count: {}'.format(tag, count))
@@ -54,8 +57,8 @@ def get_links_from_pocket(tag, count):
     data = {'consumer_key': pocket_consumer_key,
             'access_token': pocket_access_token,
             'sort': 'newest', # fixed
-            'tag': tag,
             'count': count }
+    if tag: data['tag'] = tag
 
     resp = requests.post(request_url, data=data)
     if resp.status_code != 200:
