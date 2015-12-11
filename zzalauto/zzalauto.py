@@ -58,7 +58,7 @@ def activate(tag=None, count=5):
 
     try:
         ids, links = get_links_from_pocket(tag, count)
-        image_files = download_pics_from_twitter(links, tmp_path)
+        image_files, link_results = download_pics_from_twitter(links, tmp_path)
         n_success = upload_to_dropbox(image_files)
 
         archive_pocket_links(ids)
@@ -76,7 +76,7 @@ def activate(tag=None, count=5):
         log.exception('failed to remove tmp directory')
         raise e
 
-    return render_template('index.html', links=links, contents=contents)
+    return render_template('index.html', link_results=link_results, contents=contents)
 
 def get_links_from_pocket(tag, count):
     log.debug('get links from pocket. tag: {}, count: {}'.format(tag, count))
@@ -97,12 +97,7 @@ def get_links_from_pocket(tag, count):
     parsed = resp.json()
     items = parsed['list']
 
-    links = []
-    for item in items.values():
-        if 'resolved_url' in item:
-            links.append(item['resolved_url'])
-        else:
-            links.append(item['given_url'])
+    links = [item['given_url'] for item in items.values()]
 
     return items.keys(), links
 
@@ -110,11 +105,13 @@ def download_pics_from_twitter(links, tmp_path):
     log.debug('download pics from twitter. n_links: {}'.format(len(links)))
 
     image_links = []
+    link_results = []
 
     # collect direct links
     for link in links:
         resp = requests.get(link)
         if resp.status_code == 404:
+            link_results.append({'link': link, 'result': 'deleted'})
             continue
         elif resp.status_code != 200:
             msg = 'Could not read page. response code: {}, url: {}'.format(
@@ -128,7 +125,15 @@ def download_pics_from_twitter(links, tmp_path):
         searched = image_match.findall(resp.text)
         replaced = [link.replace(':large', ':orig') for link in searched]
 
-        if '400x400' in replaced: continue # skip profile picture
+        if 'profile_images' in replaced:
+            link_results.append({'link': link, 'result': 'only profile pictures'})
+            continue # skip profile picture
+
+        if 'ext_tw_video_thumb' in replaced:
+            link_results.append({'link': link, 'result': 'only videos'})
+            continue # skip video
+
+        link_results.append({'link': link, 'result': '{} pictures downloaded'.format(len(replaced))})
 
         image_links += replaced
 
@@ -149,7 +154,7 @@ def download_pics_from_twitter(links, tmp_path):
         else:
             msg = 'failed to download image file {}'.format(filepath)
             raise StopPipeline(msg)
-    return image_files
+    return image_files, link_results
 
 def upload_to_dropbox(image_files):
     log.debug('upload to dropbox for {} files'.format(len(image_files)))
@@ -173,7 +178,7 @@ def upload_to_dropbox(image_files):
         dropbox_path = '{}/{}'.format(working_dir, image_file.split('/')[-1])
         with open(image_file, 'rb') as f:
             try:
-                resp = client.put_file(dropbox_path, f)
+                resp = client.put_file(dropbox_path, f, overwrite=True)
                 log.debug('uploaded to dropbox: {}({})'.format(resp['path'], resp['size']))
                 n_success += 1
             except dropbox.rest.ErrorResponse as e:

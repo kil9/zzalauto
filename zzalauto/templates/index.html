@@ -5,13 +5,16 @@
   </head>
   <body>
   <ul>
-    {%- for link in links %}
+    {%- for link_result in link_results -%}
+    {%- set link = link_result.link -%}
+    {%- set result = link_result.result -%}
     <li>
       <a href="{{link}}" target="_blank">{{link}}</a>
+      {{result}}
     </li>
     {% endfor -%}
   </ul>
-  {% if links %}<br>{% endif %}
+  {% if link_results %}<br>{% endif %}
     {{ contents }}
   </body>
 </html>
