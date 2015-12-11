@@ -106,7 +106,6 @@ def get_links_from_pocket(tag, count):
 
     return items.keys(), links
 
-# TODO: 제대로 그림만 받기 / 움짤은 무시해야..
 def download_pics_from_twitter(links, tmp_path):
     log.debug('download pics from twitter. n_links: {}'.format(len(links)))
 
