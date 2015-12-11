@@ -4,9 +4,14 @@
     <title>zzalauto</title>
   </head>
   <body>
-    {% for link in links %}
-    {{ link }} <br>
-    {% endfor %}
+  <ul>
+    {%- for link in links %}
+    <li>
+      <a href="{{link}}" target="_blank">{{link}}</a>
+    </li>
+    {% endfor -%}
+  </ul>
+  {% if links %}<br>{% endif %}
     {{ contents }}
   </body>
 </html>
