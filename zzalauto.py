@@ -36,12 +36,15 @@ def main():
 def activate(tag='twitter', count=5):
     log.info('activated')
 
+    if tag in ('notag', 'untagged', '_untagged_'):
+        tag = '_untagged_'
+
     ids, links = get_links_from_pocket(tag, count)
     if links: image_files = download_pics_from_twitter(links)
     upload_to_dropbox(image_files)
     archive_pocket_links(ids)
 
-# TODO: 마지막엔 트윗들을 보여주는게 좋은 것 같다 
+# TODO: 마지막엔 트윗들을 보여주는게 좋은 것 같다
     return render_template('base.html', links=links)
 
 def get_links_from_pocket(tag, count):
