@@ -1,1 +1,1 @@
-web: gunicorn zzalauto:app --log-file -
+web: gunicorn zzalauto:app --chdir=zzalauto --log-file -
