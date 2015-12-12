@@ -50,6 +50,7 @@ def activate(tag=None, count=5):
         tag = '_untagged_'
 
     prefix = 'zzalauto-'
+    link_results = []
     try:
         tmp_path = tempfile.mkdtemp(prefix=prefix)
     except OSError as ose:
@@ -152,8 +153,8 @@ def download_pics_from_twitter(links, tmp_path):
             image_files.append(filepath)
             log.debug('image file downloaded to {}'.format(filepath))
         else:
-            msg = 'failed to download image file {}'.format(filepath)
-            raise StopPipeline(msg)
+            msg = 'failed to download image file {} from {}'.format(filepath, link)
+            #raise StopPipeline(msg)
     return image_files, link_results
 
 def upload_to_dropbox(image_files):
