@@ -93,10 +93,13 @@ def get_links_from_pocket(tag, count):
     if resp.status_code != 200:
         msg = 'failed to get links from Pocket({} {})'.format(
                 resp.status_code, resp.headers['X-Error'])
-        log.error(msg)
         raise StopPipeline(msg)
     parsed = resp.json()
     items = parsed['list']
+
+    if len(items) == 0:
+        msg = 'pocket is empty'
+        raise StopPipeline(msg)
 
     links = [item['given_url'] for item in items.values()]
 
