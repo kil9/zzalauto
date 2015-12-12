@@ -124,7 +124,7 @@ def download_pics_from_twitter(links, tmp_path):
                 '<meta\s*property=\"og:image\"\s*content="(?P<contents>[^"]*)">')
 
         searched = image_match.findall(resp.text)
-        replaced = [link.replace(':large', ':orig') for link in searched]
+        replaced = [s_link.replace(':large', ':orig') for s_link in searched]
 
         if 'profile_images' in replaced:
             link_results.append({'link': link, 'result': 'only profile pictures'})
