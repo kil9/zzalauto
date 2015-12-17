@@ -69,11 +69,11 @@ def download_pics_from_twitter(links, tmp_path):
         searched = image_match.findall(resp.text)
         replaced = [s_link.replace(':large', ':orig') for s_link in searched]
 
-        if 'profile_images' in replaced:
+        if replaced and 'profile_images' in replaced[0]:
             link_results.append({'link': link, 'result': 'only profile pictures'})
             continue # skip profile picture
 
-        if 'ext_tw_video_thumb' in replaced:
+        if replaced and 'ext_tw_video_thumb' in replaced[0]:
             link_results.append({'link': link, 'result': 'only videos'})
             continue # skip video
 
