@@ -22,9 +22,10 @@ def get_links_from_pocket(tag, count):
 
     data = {'consumer_key': POCKET_CONSUMER_KEY,
             'access_token': POCKET_ACCESS_TOKEN,
-            'sort': 'newest', # fixed
-            'count': count }
-    if tag is not None: data['tag'] = tag
+            'sort': 'newest',  # fixed
+            'count': count}
+    if tag is not None:
+        data['tag'] = tag
 
     resp = requests.post(request_url, data=data)
     if resp.status_code != 200:
@@ -41,6 +42,7 @@ def get_links_from_pocket(tag, count):
     links = [item['given_url'] for item in items.values()]
 
     return items.keys(), links
+
 
 def download_pics_from_twitter(links, tmp_path):
     log.debug('download pics from twitter. n_links: {}'.format(len(links)))
@@ -59,22 +61,26 @@ def download_pics_from_twitter(links, tmp_path):
                     resp.status_code, link)
             raise StopPipeline(msg)
 
-        # <meta  property="og:image" content="https://pbs.twimg.com/media/CV3MKISUYAAAkDi.png:large">
+# <meta  property="og:image"
+#        content="https://pbs.twimg.com/media/CV3MKISUYAAAkDi.png:large">
         image_match = re.compile(
-                '<meta\s*property=\"og:image\"\s*content="(?P<contents>[^"]*)">')
+            '<meta\s*property=\"og:image\"\s*content="(?P<contents>[^"]*)">')
 
         searched = image_match.findall(resp.text)
         replaced = [s_link.replace(':large', ':orig') for s_link in searched]
 
         if replaced and 'profile_images' in replaced[0]:
-            link_results.append({'link': link, 'result': 'only profile pictures'})
-            continue # skip profile picture
+            link_results.append(
+                    {'link': link, 'result': 'only profile pictures'})
+            continue  # skip profile picture
 
         if replaced and 'ext_tw_video_thumb' in replaced[0]:
             link_results.append({'link': link, 'result': 'only videos'})
-            continue # skip video
+            continue  # skip video
 
-        link_results.append({'link': link, 'result': '{} pictures downloaded'.format(len(replaced))})
+        link_results.append(
+                {'link': link,
+                 'result': '{} pictures downloaded'.format(len(replaced))})
 
         image_links += replaced
 
@@ -93,9 +99,12 @@ def download_pics_from_twitter(links, tmp_path):
             image_files.append(filepath)
             log.debug('image file downloaded to {}'.format(filepath))
         else:
-            msg = 'failed to download image file {} from {}'.format(filepath, link)
-            #raise StopPipeline(msg)
+            msg = \
+                'failed to download image file {} from {}'.format(
+                    filepath, link)
+            # raise StopPipeline(msg)
     return image_files, link_results
+
 
 def upload_to_dropbox(image_files):
     log.debug('upload to dropbox for {} files'.format(len(image_files)))
@@ -112,7 +121,8 @@ def upload_to_dropbox(image_files):
     except dropbox.rest.ErrorResponse as e:
         if not e.status == 403:
             msg = '{}: {}'.format(e.status, e.reason)
-            log.exception('failed to upload to Dropbox: {}'.format(e.error_msg))
+            log.exception(
+                'failed to upload to Dropbox: {}'.format(e.error_msg))
             raise StopPipeline(msg)
 
     for image_file in image_files:
@@ -120,13 +130,16 @@ def upload_to_dropbox(image_files):
         with open(image_file, 'rb') as f:
             try:
                 resp = client.put_file(dropbox_path, f, overwrite=True)
-                log.debug('uploaded to dropbox: {}({})'.format(resp['path'], resp['size']))
+                log.debug('uploaded to dropbox: {}({})'.format(
+                          resp['path'], resp['size']))
                 n_success += 1
             except dropbox.rest.ErrorResponse as e:
-                log.exception('failed to upload to Dropbox: {}'.format(e.error_msg))
+                log.exception('failed to upload to Dropbox: {}'.format(
+                                e.error_msg))
                 msg = '{}: {}'.format(e.status, e.reason)
                 raise StopPipeline(msg)
     return n_success
+
 
 def archive_pocket_links(ids):
     log.debug('archive {} pocket links'.format(len(ids)))
@@ -134,7 +147,7 @@ def archive_pocket_links(ids):
         request_url = 'https://getpocket.com/v3/send'
         data = {'consumer_key': POCKET_CONSUMER_KEY,
                 'access_token': POCKET_ACCESS_TOKEN,
-                'actions': json.dumps([{ 'action': 'archive', 'item_id': id_ }])}
+                'actions': json.dumps([{'action': 'archive', 'item_id': id_}])}
 
         resp = requests.post(request_url, data=data)
         if resp.status_code != 200:
@@ -181,8 +194,10 @@ def zzalauto_callback(ch, method, properties, body):
     log.info('contents: {}'.format(contents))
     return 'callback finished'
 
+
 def consume():
-    connection = pika.BlockingConnection(pika.URLParameters(RABBITMQ_BIGWIG_RX_URL))
+    connection = \
+        pika.BlockingConnection(pika.URLParameters(RABBITMQ_BIGWIG_RX_URL))
     channel = connection.channel()
     channel.queue_declare(queue=RABBITMQ_QUEUE)
 

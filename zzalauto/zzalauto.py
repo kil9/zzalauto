@@ -12,9 +12,11 @@ from config import *
 
 app = Flask(__name__)
 
+
 class StopPipeline(Exception):
     def __init__(self, msg):
         self.msg = msg
+
 
 @app.route('/')
 def main():
@@ -24,15 +26,18 @@ def main():
 def enqueue_run(message='5'):
     log.debug('received event to publish: {}'.format(message))
 
-    connection = pika.BlockingConnection(pika.URLParameters(RABBITMQ_BIGWIG_TX_URL))
+    connection = \
+        pika.BlockingConnection(pika.URLParameters(RABBITMQ_BIGWIG_TX_URL))
     channel = connection.channel()
 
     channel.queue_declare(queue=RABBITMQ_QUEUE)
 
-    channel.basic_publish(exchange='', routing_key=RABBITMQ_QUEUE, body=message)
+    channel.basic_publish(
+            exchange='', routing_key=RABBITMQ_QUEUE, body=message)
 
     connection.close()
     return 'published event. limit: {}'.format(message)
+
 
 @app.route('/run')
 @app.route('/run/<int:count>')
@@ -62,6 +67,7 @@ def metric_set(value):
         result = e.msg
     return result
 
+
 @app.route('/metric/add/<int:value>')
 def metric_add(value):
     try:
@@ -71,15 +77,17 @@ def metric_add(value):
         result = e.msg
     return result
 
+
 def manage_metric(value, action):
     log.debug('update metric for {}, action: {}'.format(value, action))
     request_url_pattern = 'https://api.numerousapp.com/v2/metrics/{}/events'
     request_url = request_url_pattern.format(NUMEROUS_METRIC_ID)
 
     headers = {'Authorization': NUMEROUS_AUTH_STRING,
-               'Content-Type': 'application/json' }
-    payload = {'Value': value }
-    if action == 'ADD': payload['action'] = action
+               'Content-Type': 'application/json'}
+    payload = {'Value': value}
+    if action == 'ADD':
+        payload['action'] = action
     data = json.dumps(payload)
     resp = requests.post(request_url, headers=headers, data=data)
     if resp.status_code not in (200, 201):
@@ -91,4 +99,4 @@ def manage_metric(value, action):
 
 
 if __name__ == '__main__':
-    app.run(port=5000, debug=True) # only for test
+    app.run(port=5000, debug=True)  # only for test
