@@ -106,9 +106,10 @@ def download_pics_from_twitter(links, tmp_path):
     return image_files, link_results
 
 
-def upload_to_dropbox(image_files):
+def upload_to_dropbox(working_dir, image_files):
     log.debug('upload to dropbox for {} files'.format(len(image_files)))
     n_success = 0
+    dbx = dropbox.Dropbox(DROPBOX_ACCESS_TOKEN)
     client = dropbox.client.DropboxClient(DROPBOX_ACCESS_TOKEN)
 
     parent_dir = '/Workflow/Twitter/'
@@ -126,7 +127,23 @@ def upload_to_dropbox(image_files):
             raise StopPipeline(msg)
 
     for image_file in image_files:
-        dropbox_path = '{}/{}'.format(working_dir, image_file.split('/')[-1])
+        dropbox_path = os.path.abspath('{}/{}'.format(working_dir, image_file.split('/')[-1]))
+
+        log.debug('dropbox path: {}'.format(dropbox_path))
+
+        try: # duplicate check
+            log.debug('look up file: {}'.format(image_file))
+            metadata = dbx.files_get_metadata(dropbox_path)
+            log.info('file duplicate: already uploaded at {}'.format(
+                        metadata.server_modified.strftime('%Y%m%d %H:%m:%S')))
+            continue
+        except dropbox.exceptions.ApiError as e:
+            if e.message._value.is_not_found():
+                log.info('file not duplicated: this is new one!')
+            else:
+                log.error(e)
+                raise e
+
         with open(image_file, 'rb') as f:
             try:
                 resp = client.put_file(dropbox_path, f, overwrite=True)
@@ -167,12 +184,17 @@ def zzalauto_callback(ch, method, properties, body):
         log.exception('could not access to path {}'.format(tmp_path))
         raise ose
 
+    parent_dir = '/Workflow/Twitter/'
+    timestamp = datetime.datetime.now().strftime('%Y%m%d')
+    dir_name = 'zzalauto-{}'.format(timestamp)
+    working_dir = '{}/{}'.format(parent_dir, dir_name)
+
     try:
         tag = ''
         count = body
         ids, links = get_links_from_pocket(tag, count)
         image_files, link_results = download_pics_from_twitter(links, tmp_path)
-        n_success = upload_to_dropbox(image_files)
+        n_success = upload_to_dropbox(working_dir, image_files)
 
         archive_pocket_links(ids)
         metric_add(n_success)
