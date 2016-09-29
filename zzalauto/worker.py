@@ -197,7 +197,7 @@ def zzalauto_callback(ch, method, properties, body):
         n_success = upload_to_dropbox(working_dir, image_files)
 
         archive_pocket_links(ids)
-        metric_add(n_success)
+        #metric_add(n_success)
         contents = '{} pics are downloaded for {} links'.format(
                      len(image_files), len(links))
         log.info('finished: {}'.format(contents))
