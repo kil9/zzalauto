@@ -59,7 +59,9 @@ def download_pics_from_twitter(links, tmp_path):
         elif resp.status_code != 200:
             msg = 'Could not read page. response code: {}, url: {}'.format(
                     resp.status_code, link)
-            raise StopPipeline(msg)
+            log.error(msg)
+            #raise StopPipeline(msg)
+            continue
 
 # <meta  property="og:image"
 #        content="https://pbs.twimg.com/media/CV3MKISUYAAAkDi.png:large">
