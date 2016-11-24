@@ -139,7 +139,7 @@ def upload_to_dropbox(working_dir, image_files):
             continue
         except dropbox.exceptions.ApiError as e:
             if e.message._value.is_not_found():
-                log.info('file not duplicated: this is new one!')
+                log.debug('file not duplicated: this is new one!')
             else:
                 log.error(e)
                 raise e
@@ -147,7 +147,7 @@ def upload_to_dropbox(working_dir, image_files):
         with open(image_file, 'rb') as f:
             try:
                 resp = client.put_file(dropbox_path, f, overwrite=True)
-                log.debug('uploaded to dropbox: {}({})'.format(
+                log.info('uploaded to dropbox: {}({})'.format(
                           resp['path'], resp['size']))
                 n_success += 1
             except dropbox.rest.ErrorResponse as e:
