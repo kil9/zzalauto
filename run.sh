@@ -10,6 +10,7 @@ case "$1" in
   ;;
 
   *)
+    N_PIC=${1:=N_PIC}
     tmux split-window -v './web.sh'
     tmux split-window -v './worker.sh'
     sleep 5
