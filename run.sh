@@ -13,6 +13,7 @@ case "$1" in
     N_PIC=${1:-N_PIC}
     tmux split-window -v './web.sh'
     tmux split-window -v './worker.sh'
+    tmux select-layout main-horizontal
     sleep 5
     curl localhost:${PORT}/run/${N_PIC}
   ;;
