@@ -36,7 +36,7 @@ def enqueue_run(message='5'):
             exchange='', routing_key=RABBITMQ_QUEUE, body=message)
 
     connection.close()
-    return 'published event. limit: {}'.format(message)
+    return 'published event. limit: {}\n'.format(message)
 
 
 @app.route('/run')
